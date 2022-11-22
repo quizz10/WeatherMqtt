@@ -1,0 +1,46 @@
+server:
+  ports:
+    - "8989:8989"
+    - "8080:8080"
+
+logging:
+  level:
+    root: INFO
+    restapi: TRACE
+    org:
+      springframework:
+        boot:
+          autoconfigure: INFO
+spring:
+  datasource:
+    username: "root"
+    password: "root"
+    url: "jdbc:mysql://localhost:3306/mqttcity"
+    driver-class-name: "com.mysql.cj.jdbc.Driver"
+    tomcat:
+      max-wait: 20000
+      test-on-borrow: true
+      test-while-idle: true
+      validation-query: SELECT 1
+      validation-query-timeout: 1000
+      validation-interval: 1000
+
+  jpa:
+    show-sql: false
+    hibernate:
+      ddl-auto: update  # NEVER CHANGE TO CREATE_DROP OR CREATE. update can add, but never remove tables and columns
+  sql:
+    init:
+      continue-on-error: true
+#    properties:
+#      javax:
+#        persistence:
+#          schema-generation:
+#            scripts:
+#              action: update
+#              create-target: update.sql
+#              create-source: metadata
+
+#
+#jwt:
+#  secret: KLJEHW9jefhjkuf8Hef7fh
