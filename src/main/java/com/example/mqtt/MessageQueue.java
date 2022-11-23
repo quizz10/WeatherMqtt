@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 import java.net.URI;
@@ -21,7 +22,6 @@ import java.util.UUID;
 
 @EnableScheduling
 @Configuration
-
 public class MessageQueue {
     float celsius = -500f;
 
@@ -33,10 +33,9 @@ public class MessageQueue {
 
     }
 
-    @Scheduled(cron = "0/15 * * * * *")
+    @Scheduled(cron = "0 */2 * * * *")
     public void run() throws MqttException, IOException, InterruptedException {
         String city = this.cityRepository.findCityById(1L).getCityName();
-        System.out.println("HEJHEJ");
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create("https://api.openweathermap.org/data/2.5/weather?q=" + city + "&appid=34f1dfe47079741556f631b2639de87d"))
                 .method("GET", HttpRequest.BodyPublishers.noBody())
@@ -44,10 +43,12 @@ public class MessageQueue {
         HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
 
         float temperature = (new JSONObject(response.body()).getJSONObject("main").getBigDecimal("temp").floatValue()) - 273.15f;
-
+        String weatherDescription = StringUtils.capitalize(new JSONObject(response.body()).getJSONArray("weather").getJSONObject(0).getString("description"));
+        String cityName = (new JSONObject(response.body()).getString("name"));
+        System.out.println(cityName);
         if (celsius < (temperature - 0.1) || celsius > (temperature + 0.1f)) {
             celsius = temperature;
-            String celsiusString = "Temperature: " + String.format("%.2f", celsius);
+            String celsiusString = cityName + ";" + weatherDescription + ";Temperature: " + String.format("%.2f", celsius);
             String publisherId = UUID.randomUUID().toString();
 
             IMqttClient client = new MqttClient("tcp://83.251.117.120", publisherId, new MqttDefaultFilePersistence("src/main/resources/queue"));
@@ -56,8 +57,9 @@ public class MessageQueue {
                 System.out.println("attempting to connect");
                 client.connect();
             }
-            client.publish("mytopic/test", new MqttMessage(celsiusString.getBytes(StandardCharsets.UTF_8)));
+            client.publish("weatherdata/temperature", new MqttMessage(celsiusString.getBytes(StandardCharsets.UTF_8)));
             System.out.println(celsiusString);
+
         } else {
             System.out.println("SKIPPED, value was " + String.format("%.2f", temperature));
         }
