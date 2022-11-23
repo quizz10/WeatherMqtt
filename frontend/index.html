@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Weather MQTT</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body id="container">
+<div class="body">
+    <h1>Current city</h1>
+    <h2 id="current"></h2>
+    <input id="input" type="text">
+    <button id="button">Set city</button>
+</div>
+<script>
+    let currentCity = document.getElementById('current')
+
+    const getCurrent = () => {
+        fetch('http://localhost:8080/api/admin/scheduler/current')
+            .then((response) => response.text())
+            .then((text) => {
+                currentCity.innerHTML = text;
+            });
+    };
+    const changeCity = () => {
+        fetch(`http://localhost:8080/api/admin/scheduler/${document.getElementById('input').value}`, {
+            method: `PATCH`,
+            headers: {'Content-type': `application/json; charset=UTF-8`},
+        })
+        currentCity.textContent = document.getElementById('input').value
+    }
+    document.getElementById('button').addEventListener("click", changeCity, getCurrent());
+    document.getElementById('input').addEventListener("keypress", (event => {
+        if (event.key === "Enter") {
+            changeCity()
+        }
+    }))
+</script>
+</body>
+</html>
