@@ -15,4 +15,8 @@ public class CityService {
         City city = cityRepository.findCityById(1L);
         city.setCityName(cityName);
     }
+
+    public City getCurrentCityById() {
+        return cityRepository.findCityById(1L);
+    }
 }

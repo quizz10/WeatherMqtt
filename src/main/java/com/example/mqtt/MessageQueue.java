@@ -36,8 +36,11 @@ public class MessageQueue {
     @Scheduled(cron = "0 */2 * * * *")
     public void run() throws MqttException, IOException, InterruptedException {
         String city = this.cityRepository.findCityById(1L).getCityName();
+        if (city.contains(" ")) {
+            city = city.replaceAll(" ", "%20");
+        }
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create("https://api.openweathermap.org/data/2.5/weather?q=" + city + "&appid=34f1dfe47079741556f631b2639de87d"))
+                .uri(URI.create("https://api.openweathermap.org/data/2.5/weather?q=" + city.trim() + "&appid=34f1dfe47079741556f631b2639de87d"))
                 .method("GET", HttpRequest.BodyPublishers.noBody())
                 .build();
         HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
@@ -48,7 +51,7 @@ public class MessageQueue {
         System.out.println(cityName);
         if (celsius < (temperature - 0.1) || celsius > (temperature + 0.1f)) {
             celsius = temperature;
-            String celsiusString = cityName + ";" + weatherDescription + ";Temperature: " + String.format("%.2f", celsius);
+            String celsiusString = cityName + ": " + String.format("%.2f", celsius) + ";" + weatherDescription;
             String publisherId = UUID.randomUUID().toString();
 
             IMqttClient client = new MqttClient("tcp://83.251.117.120", publisherId, new MqttDefaultFilePersistence("src/main/resources/queue"));
